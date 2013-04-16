@@ -100,6 +100,8 @@ When ready, dispatch the request via the typeset manager
 
     [[TPAPIManager sharedManager] submitRequest:request];
 
+Your application will go out of focus briefly whilst the request is typeset, and when finished Texpad will pass focus back to your application.  It does not provide the user with any choices, or anything that would cause the focus to fail to return to your application.
+
 ###### Handle the returned request
 
 You handle the returned request in the delegate's typesetRequestComplete: method
