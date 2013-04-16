@@ -2,15 +2,26 @@
 
 ### Introduction
 
-This is a typesetting API that enables any iOS application to typeset LaTeX documents using Texpad's on board LaTeX typesetter.
+Texpad-API.framework is a typesetting API that enables any iOS application to typeset LaTeX documents using Texpad's builtin LaTeX typesetter.
 
-Please note that the API was only added to T
+Please note that the API server was only added to Texpad 1.5.  This API will not work with earlier versions of Texpad.
+
+### Example project
+
+The "Texpad API Test" folder contains an example project that demonstrates this API.  You will need to alter the bundle id, and provide your own provision profile in order to install it on your device.
 
 ### Getting started guide
 
-To use this library you must build all files in Texpad API folder into your binary (TPAPI.h, TPAPIManager.*, TPAPIRequest.*, NSString+TPAPICoding.*).  There is no need to include the files in the Texpad API test application
+To add this library to your project, you need only add the framework to your XCode project.  Having selected the relevant target, choose the "Build Phases" pane, open the "Link Binary with Libraries" leaf and press the "+" button to add a framework.  Next choose "Add other ..." and navigate to Texpad-API.framework.
 
-It is necessary to choose a return URL scheme. This must be prefixed with tpapi- and the remainder should be unique to your application.  Once you have chosen one (for example tpapi-testapp) please add it to your info.plist.
+The framework's include statement is
+
+    #import <TexpadAPI/TexpadAPI.h>
+
+
+###### Choose a URL Scheme
+
+Next it is necessary to choose a return URL scheme, that Texpad will use to pass the typeset document back to your application. This MUST be prefixed with `tpapi-` and the remainder should be unique to your application.  Once you have chosen one (for example tpapi-testapp) please add it to your info.plist.
 
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -22,17 +33,56 @@ It is necessary to choose a return URL scheme. This must be prefixed with tpapi-
 		</dict>
 	</array>
 
-You can check whether Texpad is installed or not before using the API
+When you first instantiate the TPAPIManager object it will search through your Application's info.plist to find this url scheme, hence the requirement that it must be prefixed with `tpapi-`.  It will throw an exception if no URL scheme is found.  We suggest a reverse-DNS style approach to naming here.
 
-    #import "TPAPI.h"
+Please note that all access to the API must be through the singleton object returned by [TPAPIManager sharedManager].
 
-    ...
+###### Add handler hook to Application Delegate's handleOpenURL:
 
-    if ([TPAPIManager typesetterPresent]) {
-        // API found
+Once the URL scheme is entered into the info.plist you must add a handler hook to the UIApplicationDelegate's application:handleOpenURL: method
+
+    -(BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
+        if ([[TPAPIManager sharedManager] handleOpenURL:url]) {
+            return YES;
+        }
+
+        // handle other URLs here
+        
+        return NO;
     }
 
-Now build a request
+This will intercept the url's matching Texpad API's naming scheme, unpack them and pass them to `[TPAPIManager sharedManager]`'s delegate.  All other urls will be ignored.
+
+####### Set TPAPIManager's delegate
+
+When a typeset request is returned from Texpad, it will be passed to `[TPAPIManager sharedManager]`'s delegate.
+
+Implement the `TPAPIManagerDelegate` protocol, in an object then set this object as the shared manager's delegate
+
+    @interface SomeObject : SomeSuperclass <TPAPIManagerDelegate> {
+
+    . . .
+
+    SomeObject *obj = [[SomeObject alloc] …
+    [TPAPIManager sharedManager].delgate = obj;
+
+Please note that when the delegate is nil, TPAPIManager will queue any returned requests, so that they are not lost.  They will be delivered when the delegate is set for the first time.
+
+This is done because although very unlikely, there is no guarantee once an application goes out of focus, that iOS will not decide to terminate it.  Whilst typesetting your application will briefly be out of focus.  In the unlikely case that iOS runs out of memory and terminates your application this guarantees that any pending typeset requests will not be lost.
+
+####### Check that Texpad is installed
+
+You can verify whether Texpad is installed or not by calling typesetterPresent on this shared object
+
+    if ([[TPAPIManager sharedManager] typesetterPresent]) {
+        // action if API found
+    } else {
+        // action if API not found
+    }
+
+###### Submit a request
+
+Once everything is setup you can submit your request
 
     // create object
     TPAPIRequest *request = [[TPAPIRequest alloc] init];
@@ -42,8 +92,21 @@ Now build a request
     [request addData:[rootFile dataUsingEncoding:NSUTF8StringEncoding]
               atPath:@"root.tex"];
 
-    // handle the result
-    request.completionHandler = ^(TPAPIRequest *request) {
+You may add as many latex, image or other data files as you like.  By default the first file added will be considered the root file for typeset purposes, but you can customise this default with the `rootFilePath` field.
+
+If your application may be submitting multiple requests (not recommended), or if you want to handle the possibility that iOS may terminate your application when it goes out focus during typeset, then we recommend that you assign an ID using the `tag` field of the TPAPIRequest object.
+
+When ready, dispatch the request via the typeset manager
+
+    [[TPAPIManager sharedManager] submitRequest:request];
+
+###### Handle the returned request
+
+You handle the returned request in the delegate's typesetRequestComplete: method
+
+    -(void)typesetRequestComplete:(TPAPIRequest*)request {
+        NSLog(@"Request %ld returned", request.tag);
+
         if (request.status == TPAPIRequestStatusSuccess) {
             NSLog(@"success!");
 
@@ -57,31 +120,21 @@ Now build a request
         } else if (request.status == TPAPIRequestStatusFailure) {
             NSLog(@"other failure!");
         }
-    };
-
-This request should be dispatched via the api manager
-
-    [[TPAPIManager sharedManager] submitRequest:request];
-    
-For the return request from Texpad to be handled you need to add a hook to the Application delegate's application:handleOpenURL: method
-
-    -(BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
-        if ([[TPAPIManager sharedManager] handleOpenURL:url]) {
-            return YES;
-        }
-        
-        return NO;
     }
-    
+
 ### Full Documentation
 
 The most detailed, and up to date, documentation is available in the header files of the framework in Doxygen format.
 
 ### Contact 
 
+If you have any questions, or trouble integrating this framework into your application, or suggestions for improvement please get in contact with us at <support@vallettaventures.com>.
+
+We'd also love to hear about anybody that is using the Texpad API, so that we can maintain a list of client applications on our website.
+
 ### License
 
-This code is available under the following license
+This code is available under the following BSD license
 
     //  Copyright (c) 2013 Valletta Ventures LLP. All rights reserved.
     //
@@ -93,9 +146,6 @@ This code is available under the following license
     // * Redistributions in binary form must reproduce the above copyright
     //   notice, this list of conditions and the following disclaimer in the
     //   documentation and/or other materials provided with the distribution.
-    // * Neither the name of the <organization> nor the
-    //   names of its contributors may be used to endorse or promote products
-    //   derived from this software without specific prior written permission.
     //
     // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
     // ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
