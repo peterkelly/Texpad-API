@@ -31,7 +31,7 @@
 #import <Foundation/Foundation.h>
 
 /**
- * A status code for this request
+ * A status code type for a request
  */
 typedef enum {
     /**
@@ -71,17 +71,26 @@ typedef enum {
 @interface TPAPIRequest : NSObject <NSCoding>
 
 /**
- * does this request require bibtex? Off by default
+ * Flag to indicate whether Bibtex should be run when typesetting this request
+ *
+ * This is set to NO by default
  */
 @property BOOL shouldBibtex;
 
 /**
- * set this property true to indicate that Texpad should typeset with Texpad-Custom-Packages directory turned on.  Off by default
+ * set this property true to indicate that Texpad should typeset with Texpad-Custom-Packages directory turned on.
+ *
+ * Files in a user's Texpad-Custom-Packages directory may overwrite the standard versions and cause unexpected behaviour when typesetting
+ * When this option is NO you are guaranteed to be using the standard distribution (unless of course the user has jailbroken)
+ *
+ * Default value is NO
  */
 @property BOOL shouldUseCustomPackages;
 
 /**
- * A data object containing the data resulting from the typeset operation
+ * A data object containing the PDF data resulting from the typeset operation
+ *
+ * This should be saved to a PDF file
  */
 @property (nonatomic, retain) NSData *pdfData;
 
@@ -97,7 +106,8 @@ typedef enum {
 @property (nonatomic, copy) NSString *typesetLog;
 
 /**
- * Which should be the root path for the typesetter?
+ * The rootFilePath is the file that Texpad will initiate typeset upon
+ * this must be the file containing the standard \documentclass command
  *
  * this property will default to the first path added
  */
@@ -111,14 +121,23 @@ typedef enum {
 @property (nonatomic, copy) NSString *returnScheme;
 
 /**
+ * The Texpad version number string
+ *
+ * This is set by Texpad when carrying out the typesetting, up until that point it will be nil
+ */
+@property (nonatomic, copy) NSString *texpadVersion;
+
+/**
  * A unique ID for this request
  *
  * in normal operation this is set by TPAPIManager when dispatching the request
+ *
+ * Please use the tag if you wish to assign an identifier for your own use
  */
 @property (nonatomic, copy) NSString *requestId;
 
 /**
- * add a file at the given path
+ * Add a file at the given path to the request
  */
 -(void)addData:(NSData*)data atPath:(NSString*)path;
 
@@ -129,19 +148,24 @@ typedef enum {
 
 /**
  * An integer tag for this request
- * This is for users
+ *
+ * This is intended as a unique identifier for the application using this API to use internally
+ * Unlike requestId it may be set before the request is dispatched as TPAPIManager will not interfere with it
  */
 @property NSInteger tag;
 
 /**
  * call this to clear the source files from this request
  *
- * this is used for minimising the size for transmission
+ * This is used for minimising the size for transmission of the document back to the calling application
+ * Do not call it yourself as it will strip all the .tex files out of the request, it is intended for Texpad's use only
  */
 -(void)stripRequest;
 
 /**
- * extract all files in the request
+ * extract all source files in the request to a directory
+ *
+ * This is intended for Texpad to use when typesetting the document, not for an API client
  *
  * @param basePath the base path for the extraction
  */
@@ -153,7 +177,9 @@ typedef enum {
 +(TPAPIRequest*)request;
 
 /**
- * generate a set of all paths contained within this request
+ * All source file paths contained within the request
+ *
+ * @return set of all paths contained within this request
  */
 -(NSSet*)allPaths;
 

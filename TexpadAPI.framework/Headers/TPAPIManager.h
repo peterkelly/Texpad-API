@@ -34,7 +34,8 @@
 @protocol TPAPIManagerDelegate;
 
 /**
- * A singleton object of this class 
+ * A Singleton API manager instance.
+ * Always use the instance created by the sharedManager class method 
  *
  * When TPAPIManager is initialised for the first time it will look for a texpad url scheme in your bundle's info.plist
  * TPAPIManager will throw an exception if an appropriate URL scheme is not found
@@ -73,12 +74,16 @@
 -(BOOL)typesetterPresent;
 
 /**
- * return the url scheme as a string
+ * Find the url scheme used by this manager
+ *
+ * @return the url scheme as a string
  */
 -(NSString*)urlScheme;
 
 /**
- * a pasteboard type for data transfer
+ * Return the pasteboard type for data transfer
+ *
+ * @return a pasteboard type for data transfer
  */
 -(NSString*)pasteboardType;
 
@@ -88,14 +93,14 @@
  * submit a request to the typesetter
  *
  * you will be notified of success or failure via the request's completion handler
- * this may be called immediately
+ * this may be called immediately if there are queued requests as requests will not be sent until the delegate has been set
  */
 -(void)submitRequest:(TPAPIRequest*)request;
 
 /**
  * Call this with a URL to allow TPAPIManager to handle a URL
  *
- * This is intended to be called from uiapplicationdelegate's application:handleURL: method
+ * A call to this MUST be inserted into uiapplicationdelegate's application:handleURL: method
  *
  * @param   the URL to be handled
  * @return  a boolean indicating whether the manager handled the URL or not

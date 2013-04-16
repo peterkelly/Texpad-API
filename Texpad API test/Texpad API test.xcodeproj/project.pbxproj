@@ -18,7 +18,6 @@
 		180C3DFB16E62A1300B05089 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 180C3DFA16E62A1300B05089 /* Default-568h@2x.png */; };
 		180C3DFE16E62A1300B05089 /* TATViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 180C3DFD16E62A1300B05089 /* TATViewController.m */; };
 		180C3E0116E62A1300B05089 /* TATViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 180C3DFF16E62A1300B05089 /* TATViewController.xib */; };
-		18734CC916E71B4E00FD89B1 /* Readme.md in Resources */ = {isa = PBXBuildFile; fileRef = 18734CC816E71B4E00FD89B1 /* Readme.md */; };
 		18734CCE16E7412000FD89B1 /* palmtree.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 18734CCD16E7412000FD89B1 /* palmtree.jpg */; };
 /* End PBXBuildFile section */
 
@@ -39,7 +38,6 @@
 		180C3DFC16E62A1300B05089 /* TATViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TATViewController.h; sourceTree = "<group>"; };
 		180C3DFD16E62A1300B05089 /* TATViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TATViewController.m; sourceTree = "<group>"; };
 		180C3E0016E62A1300B05089 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/TATViewController.xib; sourceTree = "<group>"; };
-		18734CC816E71B4E00FD89B1 /* Readme.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.md; path = ../Readme.md; sourceTree = "<group>"; };
 		18734CCD16E7412000FD89B1 /* palmtree.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = palmtree.jpg; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -61,7 +59,6 @@
 		180C3DD816E62A1300B05089 = {
 			isa = PBXGroup;
 			children = (
-				18734CC816E71B4E00FD89B1 /* Readme.md */,
 				180C3DEA16E62A1300B05089 /* Texpad API test */,
 				18734CCC16E7402E00FD89B1 /* Resources */,
 				180C3DE316E62A1300B05089 /* Frameworks */,
@@ -178,7 +175,6 @@
 				180C3DF916E62A1300B05089 /* Default@2x.png in Resources */,
 				180C3DFB16E62A1300B05089 /* Default-568h@2x.png in Resources */,
 				180C3E0116E62A1300B05089 /* TATViewController.xib in Resources */,
-				18734CC916E71B4E00FD89B1 /* Readme.md in Resources */,
 				18734CCE16E7412000FD89B1 /* palmtree.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
