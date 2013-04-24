@@ -2,17 +2,17 @@
 
 ### Introduction
 
-Texpad-API.framework is a typesetting API that enables any iOS application to typeset LaTeX documents using Texpad's builtin LaTeX typesetter.
+Texpad-API.framework is a typesetting API that enables any iOS application to typeset LaTeX documents using Texpad's built-in LaTeX typesetter.
 
 Please note that the API server was only added to Texpad 1.5.  This API will not work with earlier versions of Texpad.
 
 ### Example project
 
-The "Texpad API Test" folder contains an example project that demonstrates this API.  You will need to alter the bundle id, and provide your own provision profile in order to install it on your device.
+The "Texpad API Test" folder contains an example project that demonstrates this API.  You will need to alter the bundle id, and provide your own provisioning profile in order to install it on your device.
 
 ### Getting started guide
 
-To add this library to your project, you need only add the framework to your XCode project.  Having selected the relevant target, choose the "Build Phases" pane, open the "Link Binary with Libraries" leaf and press the "+" button to add a framework.  Next choose "Add other ..." and navigate to Texpad-API.framework.
+To use this library in your project, you must first add the framework in Xcode.  Having selected the relevant target, choose the "Build Phases" pane, open the "Link Binary with Libraries" leaf and press the "+" button to add a framework.  Next choose "Add other ..." and navigate to Texpad-API.framework.
 
 The framework's include statement is
 
@@ -21,7 +21,7 @@ The framework's include statement is
 
 ###### Choose a URL Scheme
 
-Next it is necessary to choose a return URL scheme, that Texpad will use to pass the typeset document back to your application. This MUST be prefixed with `tpapi-` and the remainder should be unique to your application.  Once you have chosen one (for example tpapi-testapp) please add it to your info.plist.
+Next it is necessary to choose a return URL scheme that Texpad will use to pass TeX's PDF document back to your application. This URL scheme **must** be prefixed with `tpapi-` and it should be unique to your application.  Once you have chosen one (for example tpapi-com.yourdomain.yourapp) please add it to your target's Info.plist.
 
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -33,13 +33,11 @@ Next it is necessary to choose a return URL scheme, that Texpad will use to pass
 		</dict>
 	</array>
 
-When you first instantiate the TPAPIManager object it will search through your Application's info.plist to find this url scheme, hence the requirement that it must be prefixed with `tpapi-`.  It will throw an exception if no URL scheme is found.  We suggest a reverse-DNS style approach to naming here.
-
-Please note that all access to the API must be through the singleton object returned by [TPAPIManager sharedManager].
+When the TPAPIManager object is first instantiated it will search through your Application's Info.plist to find this url scheme, hence the requirement that it must be prefixed with `tpapi-`.  It will throw an exception if no URL scheme is found.  
 
 ###### Add handler hook to Application Delegate's handleOpenURL:
 
-Once the URL scheme is entered into the info.plist you must add a handler hook to the UIApplicationDelegate's application:handleOpenURL: method
+Once the URL scheme has been chosen and entered into your target's Info.plist, you must add a handler hook to your application delegate's application:handleOpenURL: method
 
     -(BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
         if ([[TPAPIManager sharedManager] handleOpenURL:url]) {
@@ -51,13 +49,15 @@ Once the URL scheme is entered into the info.plist you must add a handler hook t
         return NO;
     }
 
-This will intercept the url's matching Texpad API's naming scheme, unpack them and pass them to `[TPAPIManager sharedManager]`'s delegate.  All other urls will be ignored.
+This will intercept any URL open requests matching Texpad API's naming scheme, unpack them and pass them to `[TPAPIManager sharedManager]`'s delegate.  All other URL schemes will be ignored.
 
-####### Set TPAPIManager's delegate
+Please note that all access to `TPAPIManager` should be through the singleton object returned by [TPAPIManager sharedManager].  Do not instantiate multiple API managers yourself.
+
+###### Set TPAPIManager's delegate
 
 When a typeset request is returned from Texpad, it will be passed to `[TPAPIManager sharedManager]`'s delegate.
 
-Implement the `TPAPIManagerDelegate` protocol, in an object then set this object as the shared manager's delegate
+Implement the `TPAPIManagerDelegate` protocol in an object and set this object as the delegate of the shared `TPAPIManager` instance.
 
     @interface SomeObject : SomeSuperclass <TPAPIManagerDelegate> {
 
@@ -66,13 +66,13 @@ Implement the `TPAPIManagerDelegate` protocol, in an object then set this object
     SomeObject *obj = [[SomeObject alloc] …
     [TPAPIManager sharedManager].delgate = obj;
 
-Please note that when the delegate is nil, TPAPIManager will queue any returned requests, so that they are not lost.  They will be delivered when the delegate is set for the first time.
+Please note that when the delegate is nil, TPAPIManager will queue any returned requests, so that they are not lost.  They will be delivered when the delegate is set to a non-nil value for the first time.
 
-This is done because although very unlikely, there is no guarantee once an application goes out of focus, that iOS will not decide to terminate it.  Whilst typesetting your application will briefly be out of focus.  In the unlikely case that iOS runs out of memory and terminates your application this guarantees that any pending typeset requests will not be lost.
+This is done because although very unlikely, there is no guarantee that once an application goes out of focus, iOS will not decide to terminate it.  Whilst typesetting a document, your application will briefly be out of focus, so in the unlikely case that iOS runs out of memory and terminates your application this structure guarantees that any pending typeset requests will not be lost.
 
-####### Check that Texpad is installed
+###### Check that Texpad is installed
 
-You can verify whether Texpad is installed or not by calling typesetterPresent on this shared object
+You can verify whether Texpad is installed or not by calling typesetterPresent on the shared manager object object.
 
     if ([[TPAPIManager sharedManager] typesetterPresent]) {
         // action if API found
@@ -80,9 +80,11 @@ You can verify whether Texpad is installed or not by calling typesetterPresent o
         // action if API not found
     }
 
+This allows you to unhide any options in your application that should only be visible when Texpad is present.
+
 ###### Submit a request
 
-Once everything is setup you can submit your request
+Once everything is setup, to typeset a document you should create a `TPAPIRequest` object as follows
 
     // create object
     TPAPIRequest *request = [[TPAPIRequest alloc] init];
@@ -92,9 +94,9 @@ Once everything is setup you can submit your request
     [request addData:[rootFile dataUsingEncoding:NSUTF8StringEncoding]
               atPath:@"root.tex"];
 
-You may add as many latex, image or other data files as you like.  By default the first file added will be considered the root file for typeset purposes, but you can customise this default with the `rootFilePath` field.
+You may add as many LaTeX source files, image files, or other data files as you need to.  By default the first file added will be considered the root file for typeset purposes, but you can customise this default with the `rootFilePath` property on `TPAPIRequest`.
 
-If your application may be submitting multiple requests (not recommended), or if you want to handle the possibility that iOS may terminate your application when it goes out focus during typeset, then we recommend that you assign an ID using the `tag` field of the TPAPIRequest object.
+If your application may be submitting multiple requests at the same time (not recommended at all), or if you want to handle the possibility that iOS may terminate your application when it goes out focus during typeset, then we recommend that you assign an internal ID using the `tag` field of the TPAPIRequest object.
 
 When ready, dispatch the request via the typeset manager
 
@@ -102,9 +104,11 @@ When ready, dispatch the request via the typeset manager
 
 Your application will go out of focus briefly whilst the request is typeset, and when finished Texpad will pass focus back to your application.  It does not provide the user with any choices, or anything that would cause the focus to fail to return to your application.
 
+The request will be typeset twice to ensure that any references or tables of contents or figures are built correctly.
+
 ###### Handle the returned request
 
-You handle the returned request in the delegate's typesetRequestComplete: method
+You handle the returned request in the delegate's typesetRequestComplete: method.  The status field informs you of the success or failure of the typeset, and if the typeset has failed you can find out why by checking the log.
 
     -(void)typesetRequestComplete:(TPAPIRequest*)request {
         NSLog(@"Request %ld returned", request.tag);
@@ -124,6 +128,14 @@ You handle the returned request in the delegate's typesetRequestComplete: method
         }
     }
 
+###### BibTeX
+
+BibTeX will not be run by default, but if you set the request's `shouldBibtex` flag to true, it will be executed.
+
+    reqest.shouldBibtex = YES
+
+The document will be typeset three times with one Bibtex run to ensure that references are correctly resolved (LaTeX, BibTeX, LaTeX, LaTeX).
+
 ### Full Documentation
 
 The most detailed, and up to date, documentation is available in the header files of the framework in Doxygen format.
@@ -132,7 +144,11 @@ The most detailed, and up to date, documentation is available in the header file
 
 If you have any questions, or trouble integrating this framework into your application, or suggestions for improvement please get in contact with us at <support@vallettaventures.com>.
 
-We'd also love to hear about anybody that is using the Texpad API, so that we can maintain a list of client applications on our website.
+### Applications that
+
+We'd love to hear about anybody that is using the Texpad API, so that we can maintain a list of client applications on our website.  The list so far is:
+
+* [UX Writer](http://uxproductivity.com/)
 
 ### License
 
