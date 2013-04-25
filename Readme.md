@@ -148,7 +148,7 @@ If you have any questions, or trouble integrating this framework into your appli
 
 We'd love to hear about anybody that is using the Texpad API, so that we can maintain a list of client applications on our website.  The list so far is:
 
-* [UX Writer](http://uxproductivity.com/)
+* [UX Write](http://uxproductivity.com/)
 
 ### License
 
